@@ -1,0 +1,42 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-user-select:none;
+    -moz-user-select:none;
+    -ms-user-select:none;
+    user-select:none;
+}
+.select {
+    position: absolute;
+    border: 1px solid #ba3537;
+}
+.select #resizeBox {
+    position: absolute;
+    right: -5px;
+    bottom: -5px;
+    width: 10px;
+    height: 10px;
+    background-color: #ba3537;
+    border: 2px solid #fff;
+    cursor: se-resize;
+}
+.select #rotateLine {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    width: 1px;
+    height: 20px;
+    background-color: #ba3537;
+}
+#rotateBox {
+    position: absolute;
+    top: -18px;
+    left: -7px;
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #006633;
+    cursor: pointer;
+}

@@ -1,0 +1,152 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<script>
+    var data = [
+        ['心灵手巧', '01', 'balabala', '2018-02-04'],
+        ['万能巧手', '02', 'balabala', '2018-02-05'],
+        ['日志管理员', '03', 'balabala', '2018-02-06'],
+        ['记录员', '04', 'balabala', '2018-02-07'],
+        ['绘图师', '05', 'balabala', '2018-02-08']
+    ];
+    var canvasWidth = 400,        // 画布宽度
+        canvasHeight = 400,       // 画布高度
+        speed = 2,                // 动画的速度
+        r = 10,                   // 树枝转弯处的半径
+        branchLength = 20,        // 树枝的长度
+        treeX = 200,              // 树根位置X
+        treeY = 400,              // 树根位置Y
+        branchMinHeight = 50,     // 第一个树枝的高度
+        branchMaxHeight = 300,    // 最后一个树枝的高度
+        heightStep = (branchMaxHeight - branchMinHeight) / (data.length - 1);     // 树枝间高度的间距
+    var canvas = document.getElementById("canvas"),
+        context = canvas.getContext("2d");
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+
+    /**
+     * Branch类，包括树干、树枝和文字
+     * @param x [起点的X]
+     * @param y [起点的Y]
+     * @param height [branch最终的高度]
+     * @param direction [树枝的方向, true or false]
+     * @param textList [文字]
+     * @constructor
+     */
+    function Branch(x, y, height, direction, textList) {
+        this.x = x;
+        this.y = y;
+        this._height = 10;  // 动画前的起始高度
+        this.height = height;
+        this.direction = direction;
+        this.textList = textList;
+    }
+    Branch.prototype.render = function (ctx) {
+        var firstEndY = this.y - this._height + r;  // 转弯前（树干）的终点的Y
+        var endY = this.y - this._height;   // 转弯后（树枝）的终点的Y
+        var endX = this.direction ? (this.x + r + branchLength) : (this.x - r - branchLength); // 转弯后（树枝）的终点的X
+        // 绘制树干和树枝
+        ctx.beginPath();
+        ctx.strokeStyle = '#05f';
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(this.x, firstEndY);
+        this.direction ? ctx.arc(this.x + r, firstEndY, r, Math.PI, 1.5 * Math.PI, false) :
+            ctx.arc(this.x - r, firstEndY, r, 0, 1.5 * Math.PI, true);
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
+        // 绘制圆圈
+        ctx.beginPath();
+        ctx.save();
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = "#05f";
+        ctx.fillStyle = '#05f';
+        ctx.arc(endX, endY, 4, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.restore();
+        // 绘制文字
+        // todo 文字颜色和位置调整
+        var textX = this.direction ? endX + 10 : endX - 10;
+        ctx.textAlign = this.direction ? 'start' : 'end';
+        ctx.font = '12px arial';
+        ctx.fillStyle = '#555';
+        this.textList.forEach(function (text, i) {
+            ctx.fillText(text, textX, endY + i * 20);
+        })
+    };
+    Branch.prototype.animate = function (ctx) {
+        var that = this;
+
+        requestAnimationFrame(function () {
+            that._height += speed;
+            if (that._height < that.height) {
+                that.render(ctx);
+                that.animate(ctx);
+            } else {
+                that._height = that.height;
+                that.render(ctx);
+            }
+        })
+    };
+
+    /**
+     * tree类
+     * @param data [文字数据]
+     * @constructor
+     */
+    function Tree(data) {
+        this.stoped = 0;    // 已结束动画的branch数量
+        this.data = data;
+        this.treeWidth = data.length * 2 - 1;
+        this.branchList = [];
+        for (var i = 0, len = data.length; i < len; i++) {
+            var x, height, direction;
+            // 按奇偶数确定树枝的位置和方向
+            if (i % 2 === 0) {
+                x = treeX - this.treeWidth / 2 + i;
+                direction = false;
+            } else {
+                x = treeX + this.treeWidth / 2 - i;
+                direction = true;
+            }
+            height = branchMinHeight + heightStep * i;
+            this.branchList.push(new Branch(x, treeY, height, direction, data[i]));
+        }
+    }
+    Tree.prototype.render = function (ctx) {
+        this.branchList.forEach(function (branch) {
+            branch.render(ctx);
+        })
+    };
+    Tree.prototype.animate = function (ctx) {
+        var that = this;
+        requestAnimationFrame(function () {
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+            that.branchList.forEach(function(branch){
+                if(branch._height < branch.height) {
+                    branch._height += speed;
+                }
+                if(branch._height > branch.height) {
+                    branch._height = branch.height;
+                    that.stoped++;
+                }
+                branch.render(ctx);
+
+            });
+            if(that.stoped < that.branchList.length) {
+                that.animate(ctx);
+            }
+        })
+    };
+
+
+    var tree = new Tree(data);
+    tree.animate(context);
+
+</script>
+</body>
+</html>

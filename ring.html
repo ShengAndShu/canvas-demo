@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body>
+<canvas id="canvas" width="500" height="500"></canvas>
+<script>
+    var colors = ['#57C97F', '#DAE424', '#1EBAA7', '#595D60'],
+        centerX = 160,        // 圆环中心点X
+        centerY = 160,        // 圆环中心点Y
+        minR = 80,            // 圆环最小半径
+        maxR = 140,           // 圆环最大半径
+        ringNum = 4,          // 圆环数量
+        ballNum = 30,         // 每个圆环的小球数量
+        step = (maxR - minR) / ringNum,            // 圆环间距
+        largestBallR = 5,     // 小球的最大半径
+        rings = [];           // 圆环的集合
+    var context = document.getElementById("canvas").getContext("2d");
+
+    // 定义ball类（圆环上的小球）
+    function Ball() {
+        this.largestBallR = largestBallR || 5;
+        this.r = Math.ceil(Math.random() * this.largestBallR);
+        this.color = colors[Math.floor(Math.random() * colors.length)];
+    }
+    Ball.prototype.render = function (ctx, x ,y) {
+        ctx.beginPath();
+        ctx.fillStyle = this.color;
+        ctx.arc(x, y, this.r, 0, 2 * Math.PI);
+        ctx.fill();
+    };
+
+    // 定义Ring类(圆环)
+    function Ring(x, y, r, num, alpha, startRadian) {
+        this.x = x;
+        this.y = y;
+        this.r = r;
+        this.num = num;
+        this.startRadian = startRadian || 0;
+        this.alpha = alpha || 1;
+        this.balls = [];
+        for(var i = 0; i < num; i++) {
+            this.balls.push(new Ball());
+        }
+    }
+    Ring.prototype.render = function (ctx) {
+        for(var i = 0; i < this.num; i++) {
+            var radian = this.startRadian + (2 * Math.PI / this.num) * i;
+            var ballX = this.x - this.r * Math.cos(radian);
+            var ballY = this.y + this.r * Math.sin(radian);
+            ctx.globalAlpha = this.alpha;
+            this.balls[i].render(ctx, ballX, ballY);
+        }
+    };
+
+    // 添加圆环
+    function addRings() {
+        for (var i = 0; i < ringNum; i++) {
+            var r = minR + (i + 1) * step;
+            rings.push(new Ring(centerX, centerY, r, ballNum, (maxR - r) / (maxR - minR)));
+        }
+    }
+
+    // 动画
+    function animate() {
+        requestAnimationFrame(function () {
+            context.clearRect(0, 0, 500, 500);
+            rings.forEach(function (ring) {
+                ring.r += 0.5;
+                if(ring.r > maxR) {
+                    ring.r = minR;
+                }
+                ring.alpha = (maxR - ring.r) / (maxR - minR);
+                ring.render(context);
+            });
+            animate();
+        })
+    }
+
+    addRings();
+    animate();
+</script>
+</body>
+</html>

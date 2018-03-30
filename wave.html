@@ -1,0 +1,121 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body>
+<canvas id="canvas" width="500" height="500"></canvas>
+<script>
+    var context = document.getElementById("canvas").getContext("2d");
+    /**
+     * 单个波浪
+     * @param x [起点X]
+     * @param y [起点Y]
+     * @param width [波浪总宽度]
+     * @param height [波浪高度]
+     * @param count [该波浪包含多少个单位波浪]
+     * @param color [波浪颜色]
+     * @constructor
+     */
+    function Wave(x, y, width, height, count, color) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.count = count;
+        this.color = color;
+        this.d = this.width / this.count;
+        this.hd = this.d / 2;
+        this.qd = this.d / 4;
+    }
+
+    Wave.prototype.render = function (ctx) {
+        ctx.strokeStyle = this.color;
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+
+        for (var i = 0; i < this.count; i++) {
+            var _x = this.x + i * this.d;
+            ctx.quadraticCurveTo(_x + this.qd, this.y + this.height / 2, _x + this.hd, this.y);
+            ctx.quadraticCurveTo(_x + this.qd + this.hd, this.y - this.height / 2, _x + this.d, this.y);
+        }
+
+        ctx.stroke();
+    };
+
+    /**
+     * 多重波浪
+     * @param x [起点X]
+     * @param y [起点Y]
+     * @param width [波浪总宽度]
+     * @param height [波浪高度]
+     * @param count [单条波浪包含多少个单位波浪]
+     * @param color [波浪颜色， 可选]
+     * @param num [波浪的条数， 可选]
+     * @param speed [动画速度， 可选]
+     * @param offsetX [每条波浪之间X方向的offset， 可选]
+     * @constructor
+     */
+    function Waves(x, y, width, height, count, color, num, speed, offsetX) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.count = count;
+        this.color = color || '#666';
+        this.num = num || 2;
+        this.speed = speed || 2;
+        this.d = this.width / this.count;
+        this.offsetX = offsetX || (this.d * 0.8);
+        this.waveList = [];
+        this.isCliped = false;
+        for (var i = 0; i < this.num; i++) {
+            this.waveList[i] = new Wave(x - i * this.offsetX / this.num, y, width + this.d, height, count + 1, this.color);
+        }
+    }
+    /**
+     * 动画
+     * @param ctx
+     * @param waveType [波浪运动的方式, true or false]
+     */
+    Waves.prototype.animate = function (ctx, waveType) {
+        var that = this;
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        if (!this.isCliped) {
+            this.isCliped = true;
+            ctx.rect(this.x, this.y - this.height / 2, this.width, this.height);
+            ctx.clip();
+        }
+        this.waveList.forEach(function (wave, i) {
+            if (waveType) {
+                var offsetX;
+                wave.x -= that.speed * ((i % 2) ? -1 : 1);
+                offsetX = that.x - wave.x;
+                if (offsetX >= that.d) {
+                    wave.x = that.x;
+                } else if (offsetX <= 0) {
+                    wave.x = that.x - that.d;
+                }
+                wave.render(ctx);
+            } else {
+                // 改变波浪高度的动画方式不理想，有待优化
+                wave.height -= that.speed;
+                if (wave.height >= that.height || wave.height <= -1 * that.height) {
+                    that.speed *= -1;
+                }
+                wave.render(ctx);
+            }
+        });
+        requestAnimationFrame(function () {
+            that.animate(ctx, waveType);
+        })
+    };
+
+    var waves = new Waves(10, 100, 400, 100, 2, '#d55');
+    waves.animate(context, true);
+    //waves.animate(context, false);
+
+</script>
+</body>
+</html>
